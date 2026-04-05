@@ -1,1 +1,2 @@
+export PATH="/home/tricky/.nvm/versions/node/v24.14.1/bin:$PATH"
 npx lint-staged
