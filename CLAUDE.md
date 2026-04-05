@@ -230,23 +230,22 @@ server {
 - [x] Phase 3 — Server hardened: UFW, fail2ban, SSH keys, Node, PostgreSQL, Nginx, cloudflared
 - [x] Phase 4 — Cloudflare tunnel live, fuelright.app resolving
 - [x] Phase 5 — VS Code Remote SSH working
-- [ ] Phase 6 — SparkyFitness running at fuelright.app (IN PROGRESS)
-- [ ] Phase 7 — Dev workflow, systemd service, deploy script
+- [x] Phase 6 — SparkyFitness running at fuelright.app
+- [x] Phase 7 — Dev workflow, systemd service, deploy script
 - [ ] Phase 8 — AFCD data import
 - [ ] Phase 9 — FuelRight feature development
 
 ---
 
-## Immediate next task (Phase 6 — in progress)
+## Immediate next task
 
-The repo is cloned to ~/fuelright. pnpm install has run successfully.
-The .env file is at ~/fuelright/.env (root level).
+**Phase 8 — AFCD data import.** See `.claude/food-data.md` for detail.
 
-**Still to do:**
-1. Check database initialisation — SparkyFitness likely auto-migrates on first start
-2. Start backend and confirm it connects to PostgreSQL
-3. Build frontend with `pnpm build:dev`
-4. Create systemd service
-5. Confirm app loads at https://fuelright.app
+## Key setup notes (for future reference)
 
-See `.claude/infrastructure.md` for full detail.
+- Backend must be started with `tsx`, not plain `node` (TypeScript shared package)
+- Systemd service uses absolute node path: `/home/tricky/.nvm/versions/node/v24.14.1/bin/node`
+- tsx cli.mjs: `/home/tricky/fuelright/node_modules/.pnpm/tsx@4.21.0/node_modules/tsx/dist/cli.mjs`
+- Two DB users required: `fuelright` (superuser, runs migrations) + `fuelrightapp` (RLS app user)
+- `.env` at repo root (`~/fuelright/.env`) — backend loads it via `path.resolve(__dirname, '../.env')`
+- Deploy: `~/deploy.sh`

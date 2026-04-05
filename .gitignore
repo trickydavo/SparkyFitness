@@ -64,3 +64,6 @@ docker/docker_volume/
 # TypeScript
 *.tsbuildinfo
 data/afcd/
+
+# Claude Code local settings (permissions, user-specific config)
+.claude/settings.local.json

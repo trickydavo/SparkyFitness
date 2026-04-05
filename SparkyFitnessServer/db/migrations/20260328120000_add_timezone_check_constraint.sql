@@ -5,6 +5,13 @@ ALTER TABLE public.user_preferences
 
 UPDATE public.user_preferences SET timezone = NULL;
 
-ALTER TABLE public.user_preferences
-  ADD CONSTRAINT user_preferences_timezone_not_empty
-  CHECK (timezone IS NULL OR timezone <> '');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'user_preferences_timezone_not_empty'
+  ) THEN
+    ALTER TABLE public.user_preferences
+      ADD CONSTRAINT user_preferences_timezone_not_empty
+      CHECK (timezone IS NULL OR timezone <> '');
+  END IF;
+END $$;
