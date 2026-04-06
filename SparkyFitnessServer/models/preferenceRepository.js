@@ -33,6 +33,8 @@ async function updateUserPreferences(userId, preferenceData) {
         auto_scale_online_imports = COALESCE($26, auto_scale_online_imports),
         first_day_of_week = COALESCE($30, first_day_of_week),
         default_barcode_provider_id = CASE WHEN $28 THEN $27 ELSE default_barcode_provider_id END,
+        age = COALESCE($31, age),
+        biological_sex = COALESCE($32, biological_sex),
         updated_at = now()
       WHERE user_id = $29
       RETURNING *`,
@@ -67,6 +69,8 @@ async function updateUserPreferences(userId, preferenceData) {
         'default_barcode_provider_id' in preferenceData,
         userId,
         preferenceData.first_day_of_week,
+        preferenceData.age ?? null,
+        preferenceData.biological_sex ?? null,
       ]
     );
     return result.rows[0];
@@ -141,7 +145,7 @@ async function upsertUserPreferences(preferenceData) {
        fat_breakdown_algorithm, mineral_calculation_algorithm, vitamin_calculation_algorithm, sugar_calculation_algorithm,
        auto_scale_open_food_facts_imports, exercise_calorie_percentage, activity_level,
        tdee_allow_negative_adjustment, auto_scale_online_imports, default_barcode_provider_id,
-       first_day_of_week,
+       first_day_of_week, age, biological_sex,
        created_at, updated_at
      ) VALUES (
        $1, COALESCE($2, 'yyyy-MM-dd'), COALESCE($3, 'lbs'), COALESCE($4, 'in'), COALESCE($5, 'km'),
@@ -154,7 +158,7 @@ async function upsertUserPreferences(preferenceData) {
        COALESCE($26, false),
        COALESCE($27, true),
        $28,
-       COALESCE($30, 0),
+       COALESCE($30, 0), $31, $32,
        now(), now()
      )
      ON CONFLICT (user_id) DO UPDATE SET
@@ -186,6 +190,8 @@ async function upsertUserPreferences(preferenceData) {
        auto_scale_online_imports = COALESCE(EXCLUDED.auto_scale_online_imports, user_preferences.auto_scale_online_imports),
        first_day_of_week = COALESCE(EXCLUDED.first_day_of_week, user_preferences.first_day_of_week),
        default_barcode_provider_id = CASE WHEN $29 THEN EXCLUDED.default_barcode_provider_id ELSE user_preferences.default_barcode_provider_id END,
+       age = COALESCE(EXCLUDED.age, user_preferences.age),
+       biological_sex = COALESCE(EXCLUDED.biological_sex, user_preferences.biological_sex),
        updated_at = now()
      RETURNING *`,
       [
@@ -219,6 +225,8 @@ async function upsertUserPreferences(preferenceData) {
         preferenceData.default_barcode_provider_id,
         'default_barcode_provider_id' in preferenceData,
         preferenceData.first_day_of_week,
+        preferenceData.age ?? null,
+        preferenceData.biological_sex ?? null,
       ]
     );
     return result.rows[0];

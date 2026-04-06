@@ -390,6 +390,14 @@ router.get('/openfoodfacts/search', authenticate, async (req, res, next) => {
     const data = await searchOpenFoodFacts(query, page, language);
     res.json(data);
   } catch (error) {
+    const msg = error.message || '';
+    if (
+      msg.includes('rate limit') ||
+      msg.includes('temporarily unavailable') ||
+      msg.includes('unexpected error')
+    ) {
+      return res.status(503).json({ error: msg });
+    }
     next(error);
   }
 });

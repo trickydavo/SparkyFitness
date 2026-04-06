@@ -29,8 +29,6 @@ import AddComp from '@/layouts/AddComp';
 import ThemeToggle from '@/components/ThemeToggle';
 import GlobalSyncButton from '@/components/GlobalSyncButton';
 import ProfileSwitcher from '@/components/ProfileSwitcher';
-import GitHubStarCounter from '@/components/GitHubStarCounter';
-import GitHubSponsorButton from '@/components/GitHubSponsorButton';
 import GlobalNotificationIcon from '@/components/GlobalNotificationIcon';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -325,19 +323,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onShowAboutDialog }) => {
           <div className="flex items-center gap-1">
             <img
               src="/images/SparkyFitness.webp"
-              alt="SparkyFitness Logo"
+              alt="Fuel Right Logo"
               width={54}
               height={72}
             />
             <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-slate-300">
-              SparkyFitness
+              Fuel Right
             </h1>
-            {!isMobile && (
-              <>
-                <GitHubStarCounter owner="CodeWithCJ" repo="SparkyFitness" />
-                <GitHubSponsorButton owner="CodeWithCJ" />
-              </>
-            )}
           </div>
           <div className="flex items-center gap-2">
             <ProfileSwitcher />
@@ -434,23 +426,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ onShowAboutDialog }) => {
       />
 
       <footer className="text-center text-muted-foreground text-sm py-4">
-        {isMobile ? (
-          <div className="flex flex-col items-center gap-2 mb-14">
-            <div className="flex justify-center gap-2">
-              <GitHubStarCounter owner="CodeWithCJ" repo="SparkyFitness" />
-              <GitHubSponsorButton owner="CodeWithCJ" />
-            </div>
-            <p className="cursor-pointer underline" onClick={onShowAboutDialog}>
-              SparkyFitness v{appVersion?.version ?? ''}
-            </p>
-          </div>
-        ) : (
-          <div className="flex justify-center items-center gap-4">
-            <p className="cursor-pointer underline" onClick={onShowAboutDialog}>
-              SparkyFitness v{appVersion?.version ?? ''}
-            </p>
-          </div>
-        )}
+        <div
+          className={`flex justify-center items-center gap-4 ${isMobile ? 'mb-14' : ''}`}
+        >
+          <p className="cursor-pointer underline" onClick={onShowAboutDialog}>
+            Fuel Right v{appVersion?.version ?? ''}
+          </p>
+          <span className="text-xs">
+            Nutrient data: AFCD Release 3 (FSANZ, CC BY 4.0)
+          </span>
+        </div>
       </footer>
     </div>
   );

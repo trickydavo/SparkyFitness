@@ -18,6 +18,14 @@ const OFF_FIELDS = [
   'nutriments',
 ];
 
+function offErrorMessage(status) {
+  if (status === 429)
+    return 'Food search rate limit reached — please try again in a moment.';
+  if (status === 503)
+    return 'Food search temporarily unavailable — please try again shortly.';
+  return `Food search returned an unexpected error (HTTP ${status}).`;
+}
+
 async function searchOpenFoodFacts(query, page = 1, language = 'en') {
   try {
     const fieldSet = new Set(OFF_FIELDS);
@@ -26,32 +34,51 @@ async function searchOpenFoodFacts(query, page = 1, language = 'en') {
     }
     const fields = [...fieldSet];
 
-    const searchUrl = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20&page=${page}&fields=${fields.join(',')}&lc=${language}`;
+    // Use the v2 search API (more stable than CGI), sorted by scan popularity
+    const searchUrl = `https://search.openfoodfacts.org/search?q=${encodeURIComponent(query)}&page=${page}&page_size=20&fields=${fields.join(',')}&sort_by=unique_scans_n&lc=${language}`;
     const response = await fetch(searchUrl, {
       method: 'GET',
       headers: OFF_HEADERS,
     });
     if (!response.ok) {
-      const errorText = await response.text();
-      log('error', 'OpenFoodFacts Search API error:', errorText);
-      throw new Error(`OpenFoodFacts API error: ${errorText}`);
+      const msg = offErrorMessage(response.status);
+      log(
+        'error',
+        `OpenFoodFacts Search API error: HTTP ${response.status} for query "${query}"`
+      );
+      throw new Error(msg);
+    }
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      log(
+        'error',
+        `OpenFoodFacts Search returned non-JSON content-type: ${contentType}`
+      );
+      throw new Error(
+        'Food search temporarily unavailable — please try again shortly.'
+      );
     }
     const data = await response.json();
+    // search.openfoodfacts.org v2 uses "hits" / "hitsPerPage" / "totalHits"
+    const products = data.hits ?? data.products ?? [];
+    const pageSize = data.hitsPerPage ?? data.page_size ?? 20;
+    const totalCount =
+      data.totalHits ?? data.estimatedTotalHits ?? data.count ?? 0;
+    const currentPage = data.page ?? page;
     return {
-      products: data.products,
+      products,
       pagination: {
-        page: data.page || page,
-        pageSize: data.page_size || 20,
-        totalCount: data.count || 0,
-        hasMore:
-          (data.page || page) * (data.page_size || 20) < (data.count || 0),
+        page: currentPage,
+        pageSize,
+        totalCount,
+        hasMore: currentPage * pageSize < totalCount,
       },
     };
   } catch (error) {
     log(
       'error',
       `Error searching OpenFoodFacts with query "${query}" in foodService:`,
-      error
+      error.message
     );
     throw error;
   }
@@ -82,9 +109,12 @@ async function searchOpenFoodFactsByBarcodeFields(
         );
         return { status: 0, status_verbose: 'product not found' };
       }
-      const errorText = await response.text();
-      log('error', 'OpenFoodFacts Barcode Fields Search API error:', errorText);
-      throw new Error(`OpenFoodFacts API error: ${errorText}`);
+      const msg = offErrorMessage(response.status);
+      log(
+        'error',
+        `OpenFoodFacts Barcode Fields Search API error: HTTP ${response.status} for barcode "${barcode}"`
+      );
+      throw new Error(msg);
     }
     const data = await response.json();
     return data;
@@ -92,7 +122,7 @@ async function searchOpenFoodFactsByBarcodeFields(
     log(
       'error',
       `Error searching OpenFoodFacts with barcode "${barcode}" and fields "${fields.join(',')}" in foodService:`,
-      error
+      error.message
     );
     throw error;
   }
@@ -166,7 +196,9 @@ function mapOpenFoodFactsProduct(
 
   return {
     name,
-    brand: product.brands?.split(',')[0]?.trim() || '',
+    brand: Array.isArray(product.brands)
+      ? product.brands[0]?.trim() || ''
+      : product.brands?.split(',')[0]?.trim() || '',
     barcode: normalizeBarcode(product.code),
     provider_external_id: product.code,
     provider_type: 'openfoodfacts',

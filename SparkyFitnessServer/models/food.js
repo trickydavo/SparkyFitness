@@ -156,6 +156,18 @@ async function searchFoods(
     } else if (broadMatch) {
       query += `CONCAT(f.brand, ' ', f.name) ILIKE $${paramIndex++}`;
       queryParams.push(`%${name}%`);
+      // Rank results: exact name match first, starts-with second, contains last
+      query += `
+        ORDER BY
+          CASE
+            WHEN f.name ILIKE $${paramIndex} THEN 0
+            WHEN f.name ILIKE $${paramIndex + 1} THEN 1
+            ELSE 2
+          END,
+          length(f.name)`;
+      queryParams.push(name); // exact name match → rank 0
+      queryParams.push(`${name}%`); // starts with → rank 1
+      paramIndex += 2;
     } else if (checkCustom) {
       query += `f.name = $${paramIndex++}`;
       queryParams.push(name);
@@ -476,7 +488,16 @@ async function getFoodsWithPagination(
       WHERE ${whereClauses.join(' AND ')}
     `;
 
+    // When searching without an explicit sort, rank by relevance:
+    // exact name match → starts with → contains; then by name length for ties.
     let orderByClause = 'f.name ASC, f.id ASC';
+    if (searchTerm && !sortBy) {
+      const exactIdx = paramIndex++;
+      const startsIdx = paramIndex++;
+      queryParams.push(searchTerm); // exact match param
+      queryParams.push(`${searchTerm}%`); // starts-with param
+      orderByClause = `CASE WHEN f.name ILIKE $${exactIdx} THEN 0 WHEN f.name ILIKE $${startsIdx} THEN 1 ELSE 2 END, length(f.name), f.name ASC, f.id ASC`;
+    }
     if (sortBy) {
       const [sortField, sortOrder] = sortBy.split(':');
       const nutritionSortFields = ['calories', 'protein', 'carbs', 'fat'];

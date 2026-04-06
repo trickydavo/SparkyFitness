@@ -97,6 +97,8 @@ interface PreferencesContextType {
   tdeeAllowNegativeAdjustment: boolean;
   selectedDiet: string;
   firstDayOfWeek: DayOfWeek;
+  age: number | null;
+  biologicalSex: 'male' | 'female' | null;
   setWeightUnit: (unit: WeightUnit) => void;
   setMeasurementUnit: (unit: MeasurementUnit) => void;
   setDistanceUnit: (unit: DistanceUnit) => void;
@@ -111,6 +113,8 @@ interface PreferencesContextType {
   setExerciseCaloriePercentage: (percentage: number) => void;
   setActivityLevel: (level: ActivityLevel) => void;
   setTdeeAllowNegativeAdjustment: (allow: boolean) => void;
+  setAge: (age: number | null) => void;
+  setBiologicalSex: (sex: 'male' | 'female' | null) => void;
   setEnergyUnit: (unit: EnergyUnit) => void;
   setAutoScaleOpenFoodFactsImports: (enabled: boolean) => void;
   setAutoScaleOnlineImports: (enabled: boolean) => void;
@@ -279,6 +283,10 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   const [selectedDiet, setSelectedDietState] = useState<string>('balanced');
   const [firstDayOfWeek, setFirstDayOfWeekState] = useState<DayOfWeek>(0);
+  const [age, setAgeState] = useState<number | null>(null);
+  const [biologicalSex, setBiologicalSexState] = useState<
+    'male' | 'female' | null
+  >(null);
 
   const fetchUserPreferences = useCallback(async () => {
     try {
@@ -623,6 +631,8 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({
         );
         setSelectedDietState(data.selected_diet || 'balanced');
         setFirstDayOfWeekState(data.first_day_of_week ?? 0);
+        setAgeState(data.age ?? null);
+        setBiologicalSexState(data.biological_sex ?? null);
       } else {
         await createDefaultPreferences();
         await createDefaultWaterContainer();
@@ -770,6 +780,8 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({
           newPrefs?.sugarCalculationAlgorithm ?? sugarCalculationAlgorithm,
         selected_diet: newPrefs?.selectedDiet ?? selectedDiet,
         first_day_of_week: newPrefs?.firstDayOfWeek ?? firstDayOfWeek,
+        age: newPrefs?.age ?? age,
+        biological_sex: newPrefs?.biologicalSex ?? biologicalSex,
       };
 
       try {
@@ -818,6 +830,8 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({
       sugarCalculationAlgorithm,
       selectedDiet,
       firstDayOfWeek,
+      age,
+      biologicalSex,
       updatePreferences,
       loadPreferences,
     ]
@@ -876,6 +890,22 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({
     (allow: boolean) => {
       setTdeeAllowNegativeAdjustmentState(allow);
       saveAllPreferences({ tdeeAllowNegativeAdjustment: allow });
+    },
+    [saveAllPreferences]
+  );
+
+  const setAge = useCallback(
+    (value: number | null) => {
+      setAgeState(value);
+      saveAllPreferences({ age: value });
+    },
+    [saveAllPreferences]
+  );
+
+  const setBiologicalSex = useCallback(
+    (sex: 'male' | 'female' | null) => {
+      setBiologicalSexState(sex);
+      saveAllPreferences({ biologicalSex: sex });
     },
     [saveAllPreferences]
   );
@@ -1042,6 +1072,10 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({
       setSugarCalculationAlgorithm: setSugarCalculationAlgorithmState,
       setSelectedDiet: setSelectedDietState,
       setFirstDayOfWeek: setFirstDayOfWeekState,
+      age,
+      biologicalSex,
+      setAge,
+      setBiologicalSex,
       convertWeight,
       convertMeasurement,
       convertDistance,
@@ -1084,6 +1118,10 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({
       sugarCalculationAlgorithm,
       selectedDiet,
       firstDayOfWeek,
+      age,
+      biologicalSex,
+      setAge,
+      setBiologicalSex,
       setWeightUnit,
       setMeasurementUnit,
       setDistanceUnit,

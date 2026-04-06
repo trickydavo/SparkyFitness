@@ -232,14 +232,24 @@ server {
 - [x] Phase 5 — VS Code Remote SSH working
 - [x] Phase 6 — SparkyFitness running at fuelright.app
 - [x] Phase 7 — Dev workflow, systemd service, deploy script
-- [ ] Phase 8 — AFCD data import
-- [ ] Phase 9 — FuelRight feature development
+- [x] Phase 8 — AFCD data import (1,588 foods, 268 nutrients each → afcd_nutrients table)
+- [ ] Phase 9 — FuelRight feature development (Sprint 3: NRV micronutrient tracking)
 
 ---
 
 ## Immediate next task
 
-**Phase 8 — AFCD data import.** See `.claude/food-data.md` for detail.
+**Phase 9 — Sprint 3: NRV micronutrient tracking.** See `.claude/feature-roadmap.md` and `.claude/nutrition-science.md`.
+
+## AFCD database schema (Phase 8 complete)
+
+Two tables store AFCD data:
+- `foods` — food name, provider_type='afcd', shared_with_public=TRUE, user_id=NULL
+- `food_variants` — common macros per 100g (calories, protein, fat, carbs, etc.) used by diary
+- `afcd_nutrients` — ALL 268 AFCD nutrients per food as EAV rows (nutrient_key, value, unit)
+  - 1,588 foods × 268 nutrients = 425,584 rows
+  - nutrient_key examples: 'calcium_mg', 'iron_mg', 'cobalamin_b12_ug', 'thiamin_b1_mg'
+  - Query: SELECT nutrient_key, value, unit FROM afcd_nutrients WHERE food_id = $1
 
 ## Key setup notes (for future reference)
 

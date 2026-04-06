@@ -156,6 +156,7 @@ const EnhancedFoodSearch = ({
   const selectedFoodDataProvider =
     manualProviderId ||
     defaultFoodDataProviderId ||
+    foodDataProviders.find((p) => p.provider_type === 'openfoodfacts')?.id ||
     foodDataProviders[0]?.id ||
     null;
 

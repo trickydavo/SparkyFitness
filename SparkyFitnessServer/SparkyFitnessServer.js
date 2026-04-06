@@ -26,6 +26,7 @@ const mealRoutes = require('./routes/mealRoutes');
 const foodEntryRoutes = require('./routes/foodEntryRoutes'); // Add this line
 const foodEntryMealRoutes = require('./routes/foodEntryMealRoutes'); // New: FoodEntryMeal routes
 const reportRoutes = require('./routes/reportRoutes');
+const afcdNutrientRoutes = require('./routes/afcdNutrientRoutes');
 const preferenceRoutes = require('./routes/preferenceRoutes');
 const nutrientDisplayPreferenceRoutes = require('./routes/nutrientDisplayPreferenceRoutes');
 const chatRoutes = require('./routes/chatRoutes');
@@ -343,6 +344,7 @@ app.use('/api/meals', mealRoutes);
 app.use('/api/daily-summary', dailySummaryRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/afcd-nutrients', afcdNutrientRoutes);
 app.use('/api/user-preferences', preferenceRoutes);
 app.use('/api/preferences/nutrient-display', nutrientDisplayPreferenceRoutes);
 app.use('/api/measurements', measurementRoutes);

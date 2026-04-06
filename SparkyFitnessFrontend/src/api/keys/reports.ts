@@ -1,3 +1,14 @@
+export const micronutrientKeys = {
+  dailySummary: (startDate: string, endDate: string, userId?: string) =>
+    [
+      'afcd-nutrients',
+      'daily-summary',
+      startDate,
+      endDate,
+      { userId },
+    ] as const,
+};
+
 export const reportKeys = {
   all: ['reports'] as const,
   stress: {

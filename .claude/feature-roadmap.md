@@ -11,35 +11,45 @@ Training/gym features are Phase 2 — do not start until Phase 1 is complete.
 
 ## Phase 1 — Australian Nutrition App (current focus)
 
-### Sprint 1 — Infrastructure (IN PROGRESS)
+### Sprint 1 — Infrastructure ✅ COMPLETE
 - [x] Server setup (Ubuntu, Postgres, Nginx, Node)
 - [x] Cloudflare tunnel (fuelright.app live)
 - [x] Repo cloned, pnpm install done
-- [ ] SparkyFitness running at fuelright.app
-- [ ] Systemd service created
-- [ ] Deploy script working
+- [x] SparkyFitness running at fuelright.app
+- [x] Systemd service created (tsx, absolute nvm path)
+- [x] Deploy script working (~/deploy.sh)
 
-### Sprint 2 — Australian food database
-- [ ] AFCD ETL script (scripts/seed_afcd.py)
-- [ ] AFCD 1,588 foods seeded into database
-- [ ] Food schema extended (source, source_id, is_verified, afcd_classification)
-- [ ] Open Food Facts AU bulk import
-- [ ] Search priority: AFCD first, OFF AU second, USDA fallback
-- [ ] Barcode scanner hitting au.openfoodfacts.org first
+### Sprint 2 — Australian food database ✅ COMPLETE
+- [x] AFCD ETL script (scripts/seed_afcd.py)
+- [x] AFCD 1,588 foods seeded into database (provider_type='afcd')
+- [x] afcd_nutrients table: all 268 nutrients per food (425,584 rows) — migration 20260405120000
+- [x] Food schema uses provider_type + custom_nutrients JSONB (energy_kj, derivation, description)
+- [x] Nutrient detail view (eye icon) on all foods in Food Database page
+- [x] Copy & Edit for public/AFCD foods
+- [ ] Open Food Facts AU bulk import (deferred — existing OFF integration sufficient)
+- [ ] Search priority: AFCD first, OFF AU second, USDA fallback (deferred)
+- [ ] Barcode scanner hitting au.openfoodfacts.org first (deferred)
 
-### Sprint 3 — Micronutrient tracking
-- [ ] afcd_nutrients table created and seeded
-- [ ] nrv_targets table seeded with Australian NRVs by age/sex
-- [ ] User profile extended: age, sex fields
-- [ ] Daily nutrient summary view (all 268 AFCD nutrients)
-- [ ] Coverage bars against NRV (green/amber/red/grey)
-- [ ] 7-day rolling average display
+### Sprint 3 — Micronutrient tracking ✅ COMPLETE
+- [x] NRV targets defined for tricky and wife (age/sex specific)
+- [x] Goals page extended: age + biological sex per user
+- [x] Reports page: micronutrient panel showing tracked nutrients vs NRV
+- [x] Coverage indicators (green ≥100%, amber 70–99%, red <70%) per nutrient
+- [x] 7-day rolling average for each nutrient
 
 ### Sprint 4 — Gap analysis and food suggestions
 - [ ] 7-day persistent gap detection
 - [ ] Food suggestion query (top AFCD foods for deficient nutrient)
 - [ ] Eat more of these recommendation UI
 - [ ] Supplement flag logic (D, B12, omega-3, calcium age-adjusted)
+- [ ] AFCD linking for non-AFCD foods
+  - Add `afcd_food_id` FK to `foods` table
+  - When scanning/importing a simple ingredient (e.g. rolled oats, skim milk, chicken breast),
+    suggest the closest AFCD match by name — user confirms or picks alternative
+  - Branded/processed products: offer manual link UI, no auto-suggest
+  - Micronutrient endpoint uses linked AFCD food's nutrients (scaled by serving) when available
+  - Do NOT auto-link without user confirmation — wrong links are worse than no data
+  - Priority: clear commodity ingredients first (produce, dairy, meat, grains)
 
 ### Sprint 5 — Body composition goals
 - [ ] TDEE calculator (Mifflin-St Jeor)
@@ -49,12 +59,10 @@ Training/gym features are Phase 2 — do not start until Phase 1 is complete.
 - [ ] Weekly weight-based recalculation
 - [ ] Progress charts (weight trend vs target)
 
-### Sprint 6 — Polish and access control
-- [ ] Cloudflare Access policy (two email addresses)
-- [ ] AFCD attribution in footer
+### Sprint 6 — Polish and extras
 - [ ] Meal templates for common AU meals
 - [ ] Mobile PWA testing (Add to Home Screen on iPhone)
-- [ ] Two-user experience (switch between tricky and wife profiles)
+- [ ] Sparky chatbot context: include micronutrient gaps and goal mode in system prompt
 
 ---
 

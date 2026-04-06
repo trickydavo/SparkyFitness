@@ -7,6 +7,8 @@ import {
   Dumbbell,
   BedDouble,
   Activity,
+  Microscope,
+  FlaskConical,
 } from 'lucide-react';
 import { FastingReport } from '@/pages/Reports/FastingReport';
 import { usePreferences } from '@/contexts/PreferencesContext';
@@ -33,6 +35,10 @@ import {
   useRawStressData,
   useReportsData,
 } from '@/hooks/Reports/useReports';
+import { useAfcdNutrientSummary } from '@/hooks/Reports/useMicronutrients';
+import { useDailyGoals } from '@/hooks/Goals/useGoals';
+import MicronutrientPanel from '@/pages/Reports/MicronutrientPanel';
+import GapAnalysisPanel from '@/pages/Reports/GapAnalysisPanel';
 import { useFastingDataRange } from '@/hooks/Fasting/useFasting';
 import {
   exportBodyMeasurements,
@@ -54,6 +60,8 @@ const Reports = () => {
     convertEnergy,
     weightUnit: defaultWeightUnit,
     measurementUnit: defaultMeasurementUnit,
+    biologicalSex,
+    age,
   } = usePreferences();
 
   // Suppress specific Recharts warning in hidden tabs
@@ -105,6 +113,13 @@ const Reports = () => {
     endDate,
     activeUserId
   );
+
+  const { data: afcdNutrients = [], isLoading: afcdLoading } =
+    useAfcdNutrientSummary(startDate, endDate, activeUserId);
+
+  // Goals for today — used in micronutrient panel as coverage targets
+  const todayStr = formatDateInUserTimezone(new Date(), 'yyyy-MM-dd');
+  const { data: goals } = useDailyGoals(todayStr);
 
   // Der globale Ladezustand
   const loading =
@@ -216,6 +231,20 @@ const Reports = () => {
               <TrendingUp className="w-4 h-4" />
               <span className="text-sm">{t('reports.tableTab', 'Table')}</span>
             </TabsTrigger>
+            <TabsTrigger
+              value="micronutrients"
+              className="flex items-center gap-2 shrink-0 px-4 py-2"
+            >
+              <Microscope className="w-4 h-4" />
+              <span className="text-sm">Micronutrients</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="gaps"
+              className="flex items-center gap-2 shrink-0 px-4 py-2"
+            >
+              <FlaskConical className="w-4 h-4" />
+              <span className="text-sm">Gaps & Suggestions</span>
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="charts" className="space-y-6">
             <ChartErrorBoundary>
@@ -299,6 +328,29 @@ const Reports = () => {
                   {t('reports.noMoodData', 'No daily mood data available.')}
                 </p>
               )}
+            </ChartErrorBoundary>
+          </TabsContent>
+
+          <TabsContent value="micronutrients" className="space-y-6">
+            <ChartErrorBoundary>
+              <MicronutrientPanel
+                afcdData={afcdNutrients}
+                nutritionData={nutritionData}
+                goals={goals}
+                isLoading={afcdLoading}
+                biologicalSex={biologicalSex}
+              />
+            </ChartErrorBoundary>
+          </TabsContent>
+
+          <TabsContent value="gaps" className="space-y-6">
+            <ChartErrorBoundary>
+              <GapAnalysisPanel
+                afcdData={afcdNutrients}
+                biologicalSex={biologicalSex}
+                age={age}
+                isLoading={afcdLoading}
+              />
             </ChartErrorBoundary>
           </TabsContent>
 

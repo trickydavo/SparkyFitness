@@ -1,9 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Target } from 'lucide-react';
+import { Target, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 import type { ExpandedGoals, GoalPreset, WeeklyGoalPlan } from '@/types/goals';
 import {
@@ -28,8 +31,14 @@ export const GoalsContent = ({
   today: string;
 }) => {
   const { t } = useTranslation();
-  const { formatDateInUserTimezone, nutrientDisplayPreferences } =
-    usePreferences();
+  const {
+    formatDateInUserTimezone,
+    nutrientDisplayPreferences,
+    age,
+    biologicalSex,
+    setAge,
+    setBiologicalSex,
+  } = usePreferences();
 
   const [currentWeeklyPlan, setCurrentWeeklyPlan] =
     useState<WeeklyGoalPlan | null>(null);
@@ -146,6 +155,58 @@ export const GoalsContent = ({
           {t('goals.goalsSettings.cascadingGoals', 'Cascading Goals')}
         </Badge>
       </div>
+
+      {/* Profile — age and sex for personalised NRV targets */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <User className="w-4 h-4" />
+            Profile
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Used to personalise NRV micronutrient targets (e.g. iron, zinc,
+            omega-3).
+          </p>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-6">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="profile-age">Age</Label>
+            <Input
+              id="profile-age"
+              type="number"
+              min={10}
+              max={120}
+              placeholder="e.g. 38"
+              className="w-24"
+              value={age ?? ''}
+              onChange={(e) => {
+                const v =
+                  e.target.value === '' ? null : parseInt(e.target.value, 10);
+                setAge(isNaN(v as number) ? null : v);
+              }}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label>Biological sex</Label>
+            <div className="flex gap-3 mt-1">
+              {(['male', 'female'] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setBiologicalSex(s)}
+                  className={`px-4 py-1.5 rounded-md border text-sm font-medium transition-colors ${
+                    biologicalSex === s
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'border-input hover:bg-muted'
+                  }`}
+                >
+                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Reset Onboarding */}
       <ResetOnboarding />

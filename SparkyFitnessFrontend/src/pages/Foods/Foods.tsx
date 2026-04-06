@@ -34,7 +34,16 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Search, Edit, Trash2, Plus, Share2, Filter, Lock } from 'lucide-react';
+import {
+  Search,
+  Edit,
+  Trash2,
+  Plus,
+  Share2,
+  Filter,
+  Lock,
+  Eye,
+} from 'lucide-react';
 import { useActiveUser } from '@/contexts/ActiveUserContext';
 import { useAuth } from '@/hooks/useAuth';
 import { usePreferences } from '@/contexts/PreferencesContext';
@@ -59,6 +68,7 @@ import {
   formatNutrientValue,
 } from '@/utils/nutrientUtils';
 import CustomFoodForm from '@/components/FoodSearch/CustomFoodForm';
+import { saveFood } from '@/api/Foods/enhancedCustomFoodFormService';
 import { MealFilter } from '@/types/meal';
 import type { Meal } from '@/types/meal';
 
@@ -96,6 +106,7 @@ const FoodDatabaseManager: React.FC = () => {
   const [deletionImpact, setDeletionImpact] =
     useState<FoodDeletionImpact | null>(null);
   const [foodToDelete, setFoodToDelete] = useState<Food | null>(null);
+  const [viewingFood, setViewingFood] = useState<Food | null>(null);
 
   const queryClient = useQueryClient();
   const { data: foodData, isLoading: loading } = useFoods(
@@ -137,6 +148,38 @@ const FoodDatabaseManager: React.FC = () => {
   const handleSaveComplete = () => {
     setShowEditDialog(false);
     setEditingFood(null);
+  };
+
+  const handleCopyAndEdit = async (food: Food) => {
+    if (!user || !activeUserId) return;
+    try {
+      const variant = food.default_variant;
+      const copy = await saveFood(
+        {
+          ...food,
+          id: undefined,
+          user_id: activeUserId,
+          shared_with_public: false,
+          provider_type: food.provider_type,
+          provider_external_id: undefined,
+        } as Food,
+        variant ? [{ ...variant, id: undefined, is_default: true }] : [],
+        activeUserId
+      );
+      setViewingFood(null);
+      setEditingFood(copy);
+      setShowEditDialog(true);
+      toast({
+        title: 'Copy created',
+        description: 'Editing your personal copy.',
+      });
+    } catch {
+      toast({
+        title: 'Error',
+        description: 'Could not create a copy.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleFoodSelected = (item: Food | Meal, type: 'food' | 'meal') => {
@@ -439,6 +482,25 @@ const FoodDatabaseManager: React.FC = () => {
                         </div>
                         {/* Action Buttons */}
                         <div className="flex items-center gap-0.5 shrink-0">
+                          {/* View Button */}
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0"
+                                  onClick={() => setViewingFood(food)}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>View nutrients</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+
                           {/* Share/Lock Button */}
                           <TooltipProvider>
                             <Tooltip>
@@ -790,6 +852,130 @@ const FoodDatabaseManager: React.FC = () => {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Nutrient Detail View Dialog */}
+      <Dialog
+        open={!!viewingFood}
+        onOpenChange={(open) => {
+          if (!open) setViewingFood(null);
+        }}
+      >
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{viewingFood?.name}</DialogTitle>
+            <DialogDescription>
+              {viewingFood?.brand && (
+                <span className="font-medium">{viewingFood.brand} · </span>
+              )}
+              Per {viewingFood?.default_variant?.serving_size ?? 0}{' '}
+              {viewingFood?.default_variant?.serving_unit ?? ''}
+              {viewingFood?.default_variant?.custom_nutrients?.[
+                'afcd_derivation'
+              ] && (
+                <span className="ml-2 text-xs text-gray-400">
+                  (
+                  {
+                    viewingFood.default_variant.custom_nutrients[
+                      'afcd_derivation'
+                    ]
+                  }
+                  )
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {viewingFood?.default_variant &&
+            (() => {
+              const v = viewingFood.default_variant;
+              const cn = v.custom_nutrients ?? {};
+              const rows: {
+                label: string;
+                value: number | null;
+                unit: string;
+              }[] = [
+                { label: 'Calories', value: v.calories, unit: 'kcal' },
+                { label: 'Energy', value: cn['energy_kj'] ?? null, unit: 'kJ' },
+                { label: 'Protein', value: v.protein, unit: 'g' },
+                { label: 'Fat (total)', value: v.fat, unit: 'g' },
+                { label: '  Saturated fat', value: v.saturated_fat, unit: 'g' },
+                {
+                  label: '  Monounsaturated fat',
+                  value: v.monounsaturated_fat,
+                  unit: 'g',
+                },
+                {
+                  label: '  Polyunsaturated fat',
+                  value: v.polyunsaturated_fat,
+                  unit: 'g',
+                },
+                { label: '  Trans fat', value: v.trans_fat, unit: 'g' },
+                { label: 'Carbohydrates', value: v.carbs, unit: 'g' },
+                { label: '  Sugars', value: v.sugars, unit: 'g' },
+                { label: 'Dietary fibre', value: v.dietary_fiber, unit: 'g' },
+                { label: 'Sodium', value: v.sodium, unit: 'mg' },
+                { label: 'Potassium', value: v.potassium, unit: 'mg' },
+                { label: 'Calcium', value: v.calcium, unit: 'mg' },
+                { label: 'Iron', value: v.iron, unit: 'mg' },
+                { label: 'Cholesterol', value: v.cholesterol, unit: 'mg' },
+                { label: 'Vitamin A', value: v.vitamin_a, unit: 'µg' },
+                { label: 'Vitamin C', value: v.vitamin_c, unit: 'mg' },
+              ];
+              return (
+                <div className="mt-2">
+                  {cn['description'] && (
+                    <p className="text-sm text-gray-500 mb-3 italic">
+                      {cn['description']}
+                    </p>
+                  )}
+                  <table className="w-full text-sm">
+                    <tbody>
+                      {rows.map(({ label, value, unit }) =>
+                        value !== null && value !== undefined ? (
+                          <tr
+                            key={label}
+                            className="border-b border-gray-100 dark:border-gray-700 last:border-0"
+                          >
+                            <td className="py-1.5 text-gray-600 dark:text-gray-400">
+                              {label}
+                            </td>
+                            <td className="py-1.5 text-right font-medium">
+                              {Number(value).toFixed(value < 1 ? 3 : 1)}{' '}
+                              <span className="text-xs text-gray-400">
+                                {unit}
+                              </span>
+                            </td>
+                          </tr>
+                        ) : null
+                      )}
+                    </tbody>
+                  </table>
+                  <div className="mt-4 flex justify-end">
+                    {canEdit(viewingFood) ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setViewingFood(null);
+                          handleEdit(viewingFood);
+                        }}
+                      >
+                        <Edit className="w-3 h-3 mr-1" /> Edit
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopyAndEdit(viewingFood)}
+                      >
+                        <Edit className="w-3 h-3 mr-1" /> Copy &amp; Edit
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+        </DialogContent>
+      </Dialog>
 
       <FoodSearchDialog
         open={showFoodSearchDialog}
