@@ -136,7 +136,7 @@ Single days below RDI are normal. Persistent gaps are meaningful.
 ### Food suggestions for gap closing
 When a gap is detected, query AFCD for top 10 foods that:
 1. Have high per-100g content of the deficient nutrient
-2. Are foods the user has logged before (personalised first)
+2. Are foods the user has logged before (personalised first)ig
 3. Are commonly eaten Australian foods (AFCD Analysed derivation preferred)
 
 Query pattern:
@@ -174,14 +174,26 @@ TDEE = BMR × activity_multiplier
 ```
 
 ### Calorie targets by goal
-- Cut: TDEE - 300 to -500 kcal (max -500 to preserve lean mass per meta-analysis evidence)
-- Maintain: TDEE
-- Bulk: TDEE + 200 to +300 kcal (conservative — minimises fat gain)
 
-### Protein targets by goal (per research)
-- Cut: 2.0-2.4g/kg bodyweight (higher to preserve lean mass in deficit)
-- Maintain: 1.6-2.0g/kg
-- Bulk: 1.6-2.2g/kg
+| Goal | Offset from TDEE | Weekly weight change | Key sources |
+|---|---|---|---|
+| Cut | −500 kcal/day (max) | −0.5 to −1.0% BW/week | Murphy et al. 2022 (PMID 34623696); Helms et al. 2014 |
+| Maintain | 0 | 0 | — |
+| Bulk | +250 kcal/day | +0.25 to +0.5% BW/week | Slater et al. 2019 (PMC6710320); Helms et al. 2014 |
+
+Murphy et al. 2022 meta-analysis: deficits >500 kcal/day impair lean mass gains even with resistance training.
+Slater et al. 2019: small surplus (200–300 kcal) produces similar muscle gain to larger surplus with significantly less fat gain.
+
+### Protein targets by goal (verified peer-reviewed sources)
+
+| Goal | Range (g/kg BW/day) | Target | Key sources |
+|---|---|---|---|
+| Cut | 1.8–2.7 | 2.3 | Helms et al. 2014 (IJSNEM, PMID 24092765); ISSN 2017 (PMC5477153) |
+| Maintain | 1.6–2.2 | 1.8 | Schoenfeld & Aragon 2018; Morton et al. 2018 (PMID 28698222) |
+| Bulk | 1.6–2.2 | 2.0 | Morton et al. 2018; ISSN 2017; Stokes et al. 2021 (PMID 33300582) |
+
+Age caveat: Adults >50 have anabolic resistance — aim for upper end of range + 35–40g/meal minimum.
+Source: Morton et al. 2018; Trommelen et al. 2023 (Cell Rep Med, PMID 38118410).
 
 ### Weekly weight-based recalculation
 After 2 weeks of data:

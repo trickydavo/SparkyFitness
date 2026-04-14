@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -10,6 +12,7 @@ import {
 import { UserCustomNutrient } from '@/types/customNutrient';
 import type { GlycemicIndex, NumericFoodVariantKeys } from '@/types/food';
 import type { FormFoodVariant } from '@/utils/foodForm';
+import { NRV_MICRONUTRIENT_FORM_FIELDS } from '@/constants/nrv';
 
 interface NutrientFieldConfig {
   key: NumericFoodVariantKeys;
@@ -146,6 +149,7 @@ export function NutrientGrid({
 }: NutrientGridProps) {
   const isLocked = variant.is_locked ?? false;
   const visible = new Set(visibleNutrients);
+  const [showMicronutrients, setShowMicronutrients] = useState(false);
 
   const update = (field: string) => (val: string) =>
     onUpdate(variantIndex, field, val);
@@ -252,6 +256,45 @@ export function NutrientGrid({
           </div>
         </div>
       )}
+
+      {/* NRV-aligned micronutrients — vitamins, minerals, fatty acids */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowMicronutrients((v) => !v)}
+          className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {showMicronutrients ? (
+            <ChevronUp className="w-3.5 h-3.5" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5" />
+          )}
+          Vitamins &amp; Minerals (for supplements)
+        </button>
+        {showMicronutrients && (
+          <>
+            <p className="text-xs text-muted-foreground mt-1 mb-3">
+              Values per serving. These map to NRV micronutrient tracking in
+              Reports.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {NRV_MICRONUTRIENT_FORM_FIELDS.map(
+                ({ key, label, unit, step }) => (
+                  <NutrientInput
+                    key={key}
+                    id={gridId(variantIndex, key)}
+                    label={`${label} (${unit})`}
+                    value={variant.custom_nutrients?.[key] ?? ''}
+                    step={step}
+                    disabled={isLocked}
+                    onChange={update(key)}
+                  />
+                )
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

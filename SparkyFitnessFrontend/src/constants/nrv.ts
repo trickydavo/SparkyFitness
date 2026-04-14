@@ -250,6 +250,73 @@ export const NRV_REFERENCE: Record<string, NrvEntry> = {
   },
 };
 
+/**
+ * Fixed NRV-aligned micronutrient fields for the custom food form.
+ * Keys match nutrient_key in NRV_REFERENCE and afcd_nutrients.
+ * Values are stored in food_variants.custom_nutrients JSONB, per serving.
+ * These nutrients are not stored as standard food_variants columns —
+ * this covers vitamins/minerals not in the standard 17-field schema.
+ */
+export const NRV_MICRONUTRIENT_FORM_FIELDS: {
+  key: string;
+  label: string;
+  unit: string;
+  step: string;
+}[] = [
+  {
+    key: 'vitamin_d3_equivalents_ug',
+    label: 'Vitamin D',
+    unit: 'µg',
+    step: '0.1',
+  },
+  { key: 'alpha_tocopherol_mg', label: 'Vitamin E', unit: 'mg', step: '0.1' },
+  { key: 'thiamin_b1_mg', label: 'Thiamin (B1)', unit: 'mg', step: '0.01' },
+  {
+    key: 'riboflavin_b2_mg',
+    label: 'Riboflavin (B2)',
+    unit: 'mg',
+    step: '0.01',
+  },
+  {
+    key: 'niacin_derived_equivalents_mg',
+    label: 'Niacin (B3)',
+    unit: 'mg NE',
+    step: '0.1',
+  },
+  {
+    key: 'pantothenic_acid_b5_mg',
+    label: 'Pantothenic Acid (B5)',
+    unit: 'mg',
+    step: '0.1',
+  },
+  { key: 'pyridoxine_b6_mg', label: 'Vitamin B6', unit: 'mg', step: '0.01' },
+  { key: 'biotin_b7_ug', label: 'Biotin (B7)', unit: 'µg', step: '0.1' },
+  {
+    key: 'dietary_folate_equivalents_ug',
+    label: 'Folate',
+    unit: 'µg DFE',
+    step: '1',
+  },
+  { key: 'cobalamin_b12_ug', label: 'Vitamin B12', unit: 'µg', step: '0.01' },
+  { key: 'zinc_mg', label: 'Zinc', unit: 'mg', step: '0.1' },
+  { key: 'magnesium_mg', label: 'Magnesium', unit: 'mg', step: '1' },
+  { key: 'iodine_ug', label: 'Iodine', unit: 'µg', step: '1' },
+  { key: 'selenium_ug', label: 'Selenium', unit: 'µg', step: '1' },
+  { key: 'phosphorus_mg', label: 'Phosphorus', unit: 'mg', step: '1' },
+  {
+    key: 'total_long_chain_omega_3_fatty_acids_equated_mg',
+    label: 'Omega-3 EPA+DHA',
+    unit: 'mg',
+    step: '1',
+  },
+  { key: 'c18_3w3_g', label: 'ALA (plant omega-3)', unit: 'g', step: '0.01' },
+];
+
+/** Set of NRV micronutrient keys for quick lookup in form hooks. */
+export const NRV_MICRONUTRIENT_KEYS = new Set(
+  NRV_MICRONUTRIENT_FORM_FIELDS.map((f) => f.key)
+);
+
 /** The nutrient_keys already tracked in food_variants / CENTRAL_NUTRIENT_CONFIG.
  *  We skip these in the "extended" AFCD panel to avoid duplication.
  *  (They are shown in the standard nutrients section instead.)

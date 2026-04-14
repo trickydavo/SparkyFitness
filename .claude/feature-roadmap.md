@@ -37,12 +37,12 @@ Training/gym features are Phase 2 — do not start until Phase 1 is complete.
 - [x] Coverage indicators (green ≥100%, amber 70–99%, red <70%) per nutrient
 - [x] 7-day rolling average for each nutrient
 
-### Sprint 4 — Gap analysis and food suggestions
-- [ ] 7-day persistent gap detection
-- [ ] Food suggestion query (top AFCD foods for deficient nutrient)
-- [ ] Eat more of these recommendation UI
-- [ ] Supplement flag logic (D, B12, omega-3, calcium age-adjusted)
-- [ ] AFCD linking for non-AFCD foods
+### Sprint 4 — Gap analysis and food suggestions ✅ COMPLETE
+- [x] 7-day persistent gap detection
+- [x] Food suggestion query (top AFCD foods for deficient nutrient)
+- [x] Eat more of these recommendation UI (expandable food sources per gap card)
+- [x] Supplement flag logic (D, B12, omega-3, calcium age-adjusted)
+- [ ] AFCD linking for non-AFCD foods (deferred)
   - Add `afcd_food_id` FK to `foods` table
   - When scanning/importing a simple ingredient (e.g. rolled oats, skim milk, chicken breast),
     suggest the closest AFCD match by name — user confirms or picks alternative
@@ -51,18 +51,34 @@ Training/gym features are Phase 2 — do not start until Phase 1 is complete.
   - Do NOT auto-link without user confirmation — wrong links are worse than no data
   - Priority: clear commodity ingredients first (produce, dairy, meat, grains)
 
-### Sprint 5 — Body composition goals
-- [ ] TDEE calculator (Mifflin-St Jeor)
-- [ ] Goal mode selection (cut/maintain/bulk)
-- [ ] Calorie target from goal mode
-- [ ] Protein target from goal mode
-- [ ] Weekly weight-based recalculation
-- [ ] Progress charts (weight trend vs target)
+### Sprint 5 — Body composition goals ✅ COMPLETE
+- [x] TDEE calculator (Mifflin-St Jeor, evidence-based constants in bodyCompositionTargets.ts)
+- [x] Goal mode selection (cut/maintain/bulk) with scientific rationale shown in UI
+- [x] Calorie target from goal mode (TDEE ± evidence-based offset)
+- [x] Protein target from goal mode (g/kg bodyweight, age-adjusted for >50)
+- [x] Apply to Today's Goals button (saves immediately with cascade)
+- [ ] Weekly weight-based recalculation (deferred — manual recalc via calculator is sufficient)
+- [ ] Progress charts (weight trend vs target) (deferred to Phase 2)
 
 ### Sprint 6 — Polish and extras
 - [ ] Meal templates for common AU meals
 - [ ] Mobile PWA testing (Add to Home Screen on iPhone)
 - [ ] Sparky chatbot context: include micronutrient gaps and goal mode in system prompt
+
+### Future — FSANZ Branded Food Database (deferred — not yet available)
+- Database is under development by Food Standards Australia New Zealand
+- Will cover ~85% of packaged retail SKUs sold in AU
+- Only NIP-level nutrients (energy, protein, fat, sat fat, carbs, sugars, sodium, fibre)
+- No public download or API yet — brand-owner controlled, unclear licensing
+- Monitor: https://www.foodstandards.gov.au/science-data/food-nutrient-databases/branded-food-database
+- Revisit when public download is available — would be useful for barcode-to-brand matching
+
+### Future — Open Food Facts AU bulk import (deferred)
+- Full JSONL dump ~50GB, AU subset ~2-5GB, ODbL licence
+- Would fix OFF search quality completely — local PostgreSQL search, no French results
+- ~20-40k usable AU products after quality filtering (calories > 0)
+- Only adds macro-level data, not micronutrients
+- Revisit if OFF live API search quality remains a recurring pain point
 
 ---
 

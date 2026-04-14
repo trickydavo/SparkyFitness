@@ -4,6 +4,28 @@ const { authenticate } = require('../middleware/authMiddleware');
 const { getClient } = require('../db/poolManager');
 const { canAccessUserData } = require('../utils/permissionUtils');
 
+// NRV-aligned micronutrient keys that can be stored in food_variants.custom_nutrients JSONB.
+// Must match NRV_MICRONUTRIENT_FORM_FIELDS keys in the frontend.
+const CUSTOM_NRV_KEYS = [
+  'vitamin_d3_equivalents_ug',
+  'alpha_tocopherol_mg',
+  'thiamin_b1_mg',
+  'riboflavin_b2_mg',
+  'niacin_derived_equivalents_mg',
+  'pantothenic_acid_b5_mg',
+  'pyridoxine_b6_mg',
+  'biotin_b7_ug',
+  'dietary_folate_equivalents_ug',
+  'cobalamin_b12_ug',
+  'zinc_mg',
+  'magnesium_mg',
+  'iodine_ug',
+  'selenium_ug',
+  'phosphorus_mg',
+  'total_long_chain_omega_3_fatty_acids_equated_mg',
+  'c18_3w3_g',
+];
+
 /**
  * GET /api/afcd-nutrients/daily-summary
  *
@@ -97,6 +119,76 @@ router.get('/daily-summary', authenticate, async (req, res, next) => {
         date: row.date,
         total: parseFloat(row.daily_total),
       });
+    }
+
+    // Second query: pick up NRV micronutrient keys from food_variants.custom_nutrients JSONB.
+    // These are stored per-serving; scale by (quantity / serving_size) — same formula as AFCD.
+    // food_entries.variant_id links to the specific food_variants row logged.
+    const customResult = await client.query(
+      `SELECT
+         jb.key                                    AS nutrient_key,
+         jb.key                                    AS nutrient_label,
+         CASE
+           WHEN RIGHT(jb.key, 3) = '_mg' THEN 'mg'
+           WHEN RIGHT(jb.key, 3) = '_ug' THEN 'µg'
+           WHEN RIGHT(jb.key, 2) = '_g'  THEN 'g'
+           ELSE ''
+         END                                       AS unit,
+         TO_CHAR(combined.entry_date, 'YYYY-MM-DD') AS date,
+         ROUND(SUM(jb.value::numeric * combined.quantity / combined.serving_size)::numeric, 4)
+                                                   AS daily_total
+       FROM (
+         SELECT fe.variant_id, fe.entry_date, fe.quantity, fe.serving_size
+         FROM food_entries fe
+         WHERE fe.user_id = $1
+           AND fe.entry_date BETWEEN $2 AND $3
+           AND fe.food_entry_meal_id IS NULL
+           AND fe.serving_size > 0
+           AND fe.variant_id IS NOT NULL
+
+         UNION ALL
+
+         SELECT fe_meal.variant_id, fem.entry_date, fe_meal.quantity, fe_meal.serving_size
+         FROM food_entry_meals fem
+         JOIN food_entries fe_meal ON fem.id = fe_meal.food_entry_meal_id
+         WHERE fem.user_id = $1
+           AND fem.entry_date BETWEEN $2 AND $3
+           AND fe_meal.serving_size > 0
+           AND fe_meal.variant_id IS NOT NULL
+       ) AS combined
+       JOIN food_variants fv ON fv.id = combined.variant_id
+       JOIN LATERAL jsonb_each_text(COALESCE(fv.custom_nutrients, '{}')) AS jb(key, value) ON true
+       WHERE jb.key = ANY($4::text[])
+         AND jb.value ~ '^[0-9]+(\\.[0-9]+)?$'
+         AND jb.value::numeric > 0
+       GROUP BY jb.key, TO_CHAR(combined.entry_date, 'YYYY-MM-DD')
+       ORDER BY jb.key, date`,
+      [targetUserId, startDate, endDate, CUSTOM_NRV_KEYS]
+    );
+
+    // Merge custom_nutrients results into byKey (add to any AFCD totals for the same date).
+    for (const row of customResult.rows) {
+      if (!byKey[row.nutrient_key]) {
+        byKey[row.nutrient_key] = {
+          nutrient_key: row.nutrient_key,
+          nutrient_label: row.nutrient_label,
+          unit: row.unit,
+          daily_totals: [],
+        };
+      }
+      const existing = byKey[row.nutrient_key].daily_totals.find(
+        (d) => d.date === row.date
+      );
+      if (existing) {
+        existing.total =
+          Math.round((existing.total + parseFloat(row.daily_total)) * 10000) /
+          10000;
+      } else {
+        byKey[row.nutrient_key].daily_totals.push({
+          date: row.date,
+          total: parseFloat(row.daily_total),
+        });
+      }
     }
 
     // Calculate 7-day rolling average (last 7 days of the requested range).

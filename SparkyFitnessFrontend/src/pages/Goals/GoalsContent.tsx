@@ -13,6 +13,7 @@ import {
   useDeletePresetMutation,
   useDeleteWeeklyPlanMutation,
   useGoalPresets,
+  useSaveGoalsMutation,
 } from '@/hooks/Goals/useGoals';
 import { WeeklyGoalPlanDialog } from './WeeklyGoalPlanDialog';
 import { WeeklyGoalPlansSection } from './WeeklyGoalPlansSection';
@@ -22,6 +23,7 @@ import { ResetOnboarding } from './ResetOnboarding';
 import { GoalPresetDialog } from './GoalPresetDialog';
 import { useCustomNutrients } from '@/hooks/Foods/useCustomNutrients';
 import { DEFAULT_GOALS } from '@/constants/goals';
+import TdeeCalculatorCard from './TdeeCalculatorCard';
 
 export const GoalsContent = ({
   today,
@@ -52,6 +54,7 @@ export const GoalsContent = ({
 
   const { data: goalPresets = [] } = useGoalPresets();
   const { data: customNutrients = [] } = useCustomNutrients();
+  const { mutateAsync: saveGoals } = useSaveGoalsMutation();
 
   // --- Goal Presets Mutations ---
   const { mutateAsync: deleteGoalPreset } = useDeletePresetMutation();
@@ -207,6 +210,15 @@ export const GoalsContent = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* TDEE Calculator */}
+      <TdeeCalculatorCard
+        onApply={async (partial) => {
+          const updated = { ...goals, ...partial };
+          setGoals(updated);
+          await saveGoals({ date: today, goals: updated, cascade: true });
+        }}
+      />
 
       {/* Reset Onboarding */}
       <ResetOnboarding />

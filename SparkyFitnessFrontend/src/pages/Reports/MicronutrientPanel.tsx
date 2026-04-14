@@ -301,9 +301,10 @@ export default function MicronutrientPanel({
           </Badge>
         </div>
         <p className="text-xs text-muted-foreground mb-1">
-          7-day averages from AFCD-sourced foods only. Reference targets are
-          general Australian adult NRVs (RDI where available, otherwise AI). Not
-          personalised to age or sex.
+          7-day averages from AFCD-sourced foods and custom foods with
+          vitamin/mineral data entered. Reference targets are Australian adult
+          NRVs (RDI where available, otherwise AI). Personalised to biological
+          sex if set in Goals.
         </p>
         {!afcdFoodsLogged && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 rounded-md px-3 py-2 mb-4">

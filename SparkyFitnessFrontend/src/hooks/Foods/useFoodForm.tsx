@@ -6,6 +6,7 @@ import { toast } from '@/hooks/use-toast';
 import { useUpdateFoodEntriesSnapshotMutation } from '@/hooks/Foods/useFoods';
 import { useCustomNutrients } from '@/hooks/Foods/useCustomNutrients';
 import { useQueryClient } from '@tanstack/react-query';
+import { NRV_MICRONUTRIENT_KEYS } from '@/constants/nrv';
 import {
   foodVariantsOptions,
   useSaveFoodMutation,
@@ -231,7 +232,9 @@ export function useCustomFoodForm({
       return;
     }
 
-    const isCustomNutrient = customNutrients?.some((n) => n.name === field);
+    const isCustomNutrient =
+      customNutrients?.some((n) => n.name === field) ||
+      NRV_MICRONUTRIENT_KEYS.has(field as string);
     const isNutrientField =
       nutrientFields.includes(field as NumericFoodVariantKeys) ||
       isCustomNutrient;

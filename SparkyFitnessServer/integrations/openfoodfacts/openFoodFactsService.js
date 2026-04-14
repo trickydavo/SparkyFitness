@@ -16,6 +16,7 @@ const OFF_FIELDS = [
   'serving_size',
   'serving_quantity',
   'nutriments',
+  'countries_tags',
 ];
 
 function offErrorMessage(status) {
@@ -26,42 +27,66 @@ function offErrorMessage(status) {
   return `Food search returned an unexpected error (HTTP ${status}).`;
 }
 
+async function _fetchOffSearch(url) {
+  const response = await fetch(url, { method: 'GET', headers: OFF_HEADERS });
+  if (!response.ok) {
+    throw new Error(offErrorMessage(response.status));
+  }
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(
+      'Food search temporarily unavailable — please try again shortly.'
+    );
+  }
+  return response.json();
+}
+
+/**
+ * Sort products so AU/NZ items appear first, then global results.
+ * The OFF search API does not support server-side country filtering,
+ * so we fetch a larger result set and reorder client-side.
+ * For searches with no AU products in OFF's database (e.g. UK/French brands),
+ * global results are returned as-is.
+ */
+function prioritiseAuProducts(products) {
+  const AU_NZ = new Set(['en:australia', 'en:new-zealand']);
+  const au = [];
+  const rest = [];
+  for (const p of products) {
+    const tags = Array.isArray(p.countries_tags) ? p.countries_tags : [];
+    if (tags.some((t) => AU_NZ.has(t))) {
+      au.push(p);
+    } else {
+      rest.push(p);
+    }
+  }
+  return [...au, ...rest];
+}
+
 async function searchOpenFoodFacts(query, page = 1, language = 'en') {
   try {
     const fieldSet = new Set(OFF_FIELDS);
     if (language !== 'en') {
       fieldSet.add(`product_name_${language}`);
     }
-    const fields = [...fieldSet];
+    const fieldsParam = [...fieldSet].join(',');
 
-    // Use the v2 search API (more stable than CGI), sorted by scan popularity
-    const searchUrl = `https://search.openfoodfacts.org/search?q=${encodeURIComponent(query)}&page=${page}&page_size=20&fields=${fields.join(',')}&sort_by=unique_scans_n&lc=${language}`;
-    const response = await fetch(searchUrl, {
-      method: 'GET',
-      headers: OFF_HEADERS,
-    });
-    if (!response.ok) {
-      const msg = offErrorMessage(response.status);
-      log(
-        'error',
-        `OpenFoodFacts Search API error: HTTP ${response.status} for query "${query}"`
-      );
-      throw new Error(msg);
-    }
-    const contentType = response.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      log(
-        'error',
-        `OpenFoodFacts Search returned non-JSON content-type: ${contentType}`
-      );
-      throw new Error(
-        'Food search temporarily unavailable — please try again shortly.'
-      );
-    }
-    const data = await response.json();
-    // search.openfoodfacts.org v2 uses "hits" / "hitsPerPage" / "totalHits"
-    const products = data.hits ?? data.products ?? [];
-    const pageSize = data.hitsPerPage ?? data.page_size ?? 20;
+    // Fetch 40 results so we have enough AU products to fill a page of 20
+    // after reordering — without making two requests.
+    // Do NOT sort_by=unique_scans_n — that buries relevant results under
+    // popular French products with high global scan counts.
+    // Default relevance scoring returns correct matches first.
+    const fetchSize = 40;
+    const searchUrl = `https://search.openfoodfacts.org/search?q=${encodeURIComponent(query)}&page=${page}&page_size=${fetchSize}&fields=${fieldsParam}&lc=${language}`;
+
+    log('debug', `OpenFoodFacts search: ${searchUrl}`);
+    const data = await _fetchOffSearch(searchUrl);
+
+    const rawProducts = data.hits ?? data.products ?? [];
+
+    // Reorder: AU/NZ products first, rest follow
+    const products = prioritiseAuProducts(rawProducts);
+
     const totalCount =
       data.totalHits ?? data.estimatedTotalHits ?? data.count ?? 0;
     const currentPage = data.page ?? page;
@@ -69,9 +94,9 @@ async function searchOpenFoodFacts(query, page = 1, language = 'en') {
       products,
       pagination: {
         page: currentPage,
-        pageSize,
+        pageSize: fetchSize,
         totalCount,
-        hasMore: currentPage * pageSize < totalCount,
+        hasMore: currentPage * fetchSize < totalCount,
       },
     };
   } catch (error) {
